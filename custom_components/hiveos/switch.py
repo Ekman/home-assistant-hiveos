@@ -17,8 +17,10 @@ SCAN_INTERVAL = timedelta(minutes=5)
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Initial setup for the workers. Download and identify all workers."""
-    access_token = discovery_info[CONF_ACCESS_TOKEN] if discovery_info is not None else config[CONF_ACCESS_TOKEN]
-    url = discovery_info[CONF_URL] if discovery_info is not None else config[CONF_URL]
+    access_token = (discovery_info[CONF_ACCESS_TOKEN] if discovery_info is not None
+        else config[CONF_ACCESS_TOKEN])
+    url = (discovery_info[CONF_URL] if discovery_info is not None
+        else config[CONF_URL])
 
     session = async_get_clientsession(hass)
 
@@ -49,7 +51,7 @@ class HiveOsWorker(SwitchEntity):
         params = {
             "unique_id": worker["id"],
             "name": worker["name"],
-            "active": worker["active"],
+            "state": "no_hashrate" not in worker["stats"]["problems"],
             "farm_id": worker["farm_id"],
             "version": worker["versions"]["hive"],
             "farm_name": farm["name"]
@@ -70,7 +72,7 @@ class HiveOsWorker(SwitchEntity):
     @property
     def is_on(self):
         """Is the worker on?"""
-        return self._params["active"]
+        return self._params["state"]
 
     @property
     def assumed_state(self) -> bool:
@@ -99,7 +101,7 @@ class HiveOsWorker(SwitchEntity):
     async def async_update(self):
         """Main update logic. Poll API and check state"""
         if self._assumed_next_state is not None:
-            self._params["active"] = self._assumed_next_state
+            self._params["state"] = self._assumed_next_state
             self._assumed_next_state = None
         else:
             worker = await self._hiveos.get_worker(
@@ -107,22 +109,22 @@ class HiveOsWorker(SwitchEntity):
                 self._params["unique_id"]
             )
 
-            self._params["active"] = worker["active"]
+            self._params["state"] = "no_hashrate" not in worker["stats"]["problems"]
 
     async def async_turn_on(self, **kwargs):
         """Turn the worker on"""
-        await self._set_active(True)
+        await self._set_state(True)
 
     async def async_turn_off(self, **kwargs):
         """Turn the worker off"""
-        await self._set_active(False)
+        await self._set_state(False)
 
-    async def _set_active(self, active: bool):
-        """Set the worker to active or not"""
-        await self._hiveos.worker_set_active(
+    async def _set_state(self, state: bool):
+        """Set the worker to start/stop"""
+        await self._hiveos.worker_set_state(
             self._params["farm_id"],
             self._params["unique_id"],
-            active
+            state
         )
 
-        self._assumed_next_state = active
+        self._assumed_next_state = state
