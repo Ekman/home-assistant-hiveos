@@ -10,6 +10,7 @@ class HiveOsWorkerParams(TypedDict):
     farm_id: int
     version: str
     farm_name: str
+    online: bool
 
 class HiveOsApi:
     """Interact with the HiveOS API"""

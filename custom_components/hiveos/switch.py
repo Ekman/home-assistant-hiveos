@@ -51,10 +51,11 @@ class HiveOsWorker(SwitchEntity):
         params = {
             "unique_id": worker["id"],
             "name": worker["name"],
-            "state": "no_hashrate" not in worker["stats"]["problems"],
+            "state": "problems" not in worker["stats"] or "no_hashrate" not in worker["stats"]["problems"],
             "farm_id": worker["farm_id"],
             "version": worker["versions"]["hive"],
-            "farm_name": farm["name"]
+            "farm_name": farm["name"],
+            "online": worker["stats"]["online"]
         }
 
         return HiveOsWorker(hiveos, params)
@@ -98,6 +99,11 @@ class HiveOsWorker(SwitchEntity):
             "sw_version": self._params["version"]
         }
 
+    @property
+    def available(self) -> bool:
+        """If the switch is connected to the cloud and ready for commands"""
+        return self._params["online"]
+
     async def async_update(self):
         """Main update logic. Poll API and check state"""
         if self._assumed_next_state is not None:
@@ -109,7 +115,8 @@ class HiveOsWorker(SwitchEntity):
                 self._params["unique_id"]
             )
 
-            self._params["state"] = "no_hashrate" not in worker["stats"]["problems"]
+            self._params["state"] = "problems" not in worker["stats"] or "no_hashrate" not in worker["stats"]["problems"],
+            self._params["online"] = worker["stats"]["online"]
 
     async def async_turn_on(self, **kwargs):
         """Turn the worker on"""
