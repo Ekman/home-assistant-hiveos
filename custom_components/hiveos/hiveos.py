@@ -35,9 +35,6 @@ class HiveOsApi:
             method, f"{self.host}/{path}", json=body, headers=headers
         )
 
-        if response.status != 200:
-            raise Exception("Could not execute HTTP request")
-
         body = await response.json()
 
         return body["data"] if "data" in body else body
