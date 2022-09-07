@@ -15,14 +15,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
-async def async_setup_platform(hass, _, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Initial setup for the workers. Download and identify all workers."""
-    # We only want this platform to be set up via discovery.
-    if discovery_info is None:
-        return
-
-    access_token = discovery_info[CONF_ACCESS_TOKEN]
-    url = discovery_info[CONF_URL]
+    access_token = discovery_info[CONF_ACCESS_TOKEN] if discovery_info is not None else config[CONF_ACCESS_TOKEN]
+    url = discovery_info[CONF_URL] if discovery_info is not None else config[CONF_URL]
 
     session = async_get_clientsession(hass)
 
