@@ -62,4 +62,4 @@ class HiveOsApi:
             }
         }
 
-        await self._request("patch", f"farms/{farm_id}/workers/{worker_id}", params)
+        await self._request("post", f"farms/{farm_id}/workers/{worker_id}/command", params)
