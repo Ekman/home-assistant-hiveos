@@ -10,7 +10,7 @@ from .const import DOMAIN
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_ACCESS_TOKEN): cv.string,
-    vol.Required(CONF_URL): cv.string
+    vol.Optional(CONF_URL, default="https://api2.hiveos.farm/api/v2"): cv.string
 })
 
 SCAN_INTERVAL = timedelta(minutes=5)
