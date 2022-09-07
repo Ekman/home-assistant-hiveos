@@ -1,0 +1,12 @@
+{
+    "domain": "hiveos",
+    "name": "HiveOS",
+    "version": "0.0.1",
+    "documentation": "https://github.com/Ekman/home-assistant-hiveos",
+    "issue_tracker": "https://github.com/Ekman/home-assistant-hiveos/issues",
+    "dependencies": [],
+    "codeowners": ["Ekman"],
+    "requirements": [],
+    "iot_class": "cloud_polling",
+    "config_flow": true
+}

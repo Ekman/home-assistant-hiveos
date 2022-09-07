@@ -1,0 +1,38 @@
+version: 2.1
+commands:
+  pip:
+    steps:
+      - restore_cache:
+          key: '{{ checksum "requirements.txt" }}'
+      - run: >-
+          pip install
+          --disable-pip-version-check
+          --no-clean
+          --no-compile
+          --cache-dir /tmp/pip
+          --quiet
+          --requirement requirements.txt
+      - save_cache:
+          key: '{{ checksum "requirements.txt" }}'
+          paths: [ /tmp/pip ]
+jobs:
+  lint:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - pip
+      - run: pylint custom_components/hiveos # tests
+      - run: python3 -m json.tool custom_components/hiveos/manifest.json
+  test:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - pip
+      - run: python3 -m unittest discover --start-directory tests --verbose
+workflows:
+  hiveos:
+    jobs:
+      - lint
+      # - test

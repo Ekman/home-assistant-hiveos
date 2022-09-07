@@ -1,0 +1,19 @@
+version: "3"
+services:
+  hiveos:
+    build:
+      context: .
+    volumes: [ "./:/home/hiveos/files:ro" ]
+    read_only: true
+    tmpfs:
+      - /home/hiveos/.cache
+  # homeassistant.local:8123
+  hass:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    volumes:
+      - ./hass:/config
+      - ./custom_components:/config/custom_components:ro
+    environment:
+      TZ: Europe/Stockholm
+    ports: [ "8123:8123" ]
