@@ -6,7 +6,8 @@ class HiveOsWorkerParams(TypedDict):
     """For easy reference of which params we use from the API"""
     unique_id: int
     name: str
-    state: bool
+    gpus_online: int
+    gpus_offline: int
     farm_id: int
     version: str
     farm_name: str
@@ -54,9 +55,9 @@ class HiveOsApi:
     async def worker_set_state(self, farm_id: int, worker_id: int, state: bool = True):
         """Set a worker to start/stop"""
         params = {
-            "command": "exec",
+            "command": "miner",
             "data": {
-                "cmd": "miner " + ("start" if state else "stop")
+                "action": "restart" if state else "stop"
             }
         }
 

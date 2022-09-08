@@ -51,7 +51,8 @@ class HiveOsWorker(SwitchEntity):
         params = {
             "unique_id": worker["id"],
             "name": worker["name"],
-            "state": "problems" not in worker["stats"] or "no_hashrate" not in worker["stats"]["problems"],
+            "gpus_online": worker["stats"]["gpus_online"],
+            "gpus_offline": worker["stats"]["gpus_offline"],
             "farm_id": worker["farm_id"],
             "version": worker["versions"]["hive"],
             "farm_name": farm["name"],
@@ -73,7 +74,7 @@ class HiveOsWorker(SwitchEntity):
     @property
     def is_on(self):
         """Is the worker on?"""
-        return self._params["state"]
+        return self._params["gpus_online"] > 0
 
     @property
     def assumed_state(self) -> bool:
@@ -102,12 +103,13 @@ class HiveOsWorker(SwitchEntity):
     @property
     def available(self) -> bool:
         """If the switch is connected to the cloud and ready for commands"""
-        return self._params["online"]
+        return (self._params["online"]
+            and self._params["gpus_online"] + self._params["gpus_offline"] > 0)
 
     async def async_update(self):
         """Main update logic. Poll API and check state"""
         if self._assumed_next_state is not None:
-            self._params["state"] = self._assumed_next_state
+            self._params["gpus_online"] = self._assumed_next_state
             self._assumed_next_state = None
         else:
             worker = await self._hiveos.get_worker(
@@ -115,16 +117,19 @@ class HiveOsWorker(SwitchEntity):
                 self._params["unique_id"]
             )
 
-            self._params["state"] = "problems" not in worker["stats"] or "no_hashrate" not in worker["stats"]["problems"],
+            self._params["gpus_online"] = worker["stats"]["gpus_online"]
+            self._params["gpus_offline"] = worker["stats"]["gpus_offline"]
             self._params["online"] = worker["stats"]["online"]
 
     async def async_turn_on(self, **kwargs):
         """Turn the worker on"""
-        await self._set_state(True)
+        if not self.is_on:
+            await self._set_state(True)
 
     async def async_turn_off(self, **kwargs):
         """Turn the worker off"""
-        await self._set_state(False)
+        if self.is_on:
+            await self._set_state(False)
 
     async def _set_state(self, state: bool):
         """Set the worker to start/stop"""
@@ -134,4 +139,4 @@ class HiveOsWorker(SwitchEntity):
             state
         )
 
-        self._assumed_next_state = state
+        self._assumed_next_state = 1
