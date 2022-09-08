@@ -54,11 +54,12 @@ class HiveOsApi:
 
     async def worker_set_state(self, farm_id: int, worker_id: int, state: bool = True):
         """Set a worker to start/stop"""
-        params = {
-            "command": "miner",
-            "data": {
-                "action": "restart" if state else "stop"
+        if state:
+            params = {"command": "reboot"}
+        else:
+            params = {
+                "command": "miner",
+                "data": {"action": "stop"}
             }
-        }
 
         await self._request("post", f"farms/{farm_id}/workers/{worker_id}/command", params)
