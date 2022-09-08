@@ -13,7 +13,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_URL, default="https://api2.hiveos.farm/api/v2"): cv.string
 })
 
-SCAN_INTERVAL = timedelta(minutes=5)
+SCAN_INTERVAL = timedelta(minutes=1)
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Initial setup for the workers. Download and identify all workers."""
