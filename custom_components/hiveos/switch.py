@@ -51,8 +51,8 @@ class HiveOsWorker(SwitchEntity):
         params = {
             "unique_id": worker["id"],
             "name": worker["name"],
-            "gpus_online": worker["stats"]["gpus_online"],
-            "gpus_offline": worker["stats"]["gpus_offline"],
+            "gpus_online": worker["stats"]["gpus_online"] if "stats" in worker and "gpus_online" in worker["stats"] else 0,
+            "gpus_offline": worker["stats"]["gpus_offline"] if "stats" in worker and "gpus_offline" in worker["stats"] else 0,
             "farm_id": worker["farm_id"],
             "version": worker["versions"]["hive"],
             "farm_name": farm["name"],
@@ -117,8 +117,8 @@ class HiveOsWorker(SwitchEntity):
                 self._params["unique_id"]
             )
 
-            self._params["gpus_online"] = worker["stats"]["gpus_online"]
-            self._params["gpus_offline"] = worker["stats"]["gpus_offline"]
+            self._params["gpus_online"] = worker["stats"]["gpus_online"] if "stats" in worker and "gpus_online" in worker["stats"] else 0
+            self._params["gpus_offline"] = worker["stats"]["gpus_offline"] if "stats" in worker and "gpus_offline" in worker["stats"] else 0
             self._params["online"] = worker["stats"]["online"]
 
     async def async_turn_on(self, **kwargs):
