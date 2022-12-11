@@ -51,23 +51,18 @@ class HiveOsApi:
         # _LOGGER.error("Response from request: %d", response.status)
 
         body = await response.json()
-
-<<<<<<< HEAD
+        
         json = body["data"] if "data" in body else body
 
         if response.status > 200:
             raise HiveOsApiException(f"Failed response: {response.status} {json}")
 
         return json
-=======
-        return body["data"] if "data" in body else body
->>>>>>> c5dd508 (Work in progress)
 
     async def _command(
         self,
         farm_id: int,
         worker_id: int,
-<<<<<<< HEAD
         command: HiveOsCommand
     ):
         """Alias to execute a command"""
@@ -75,22 +70,6 @@ class HiveOsApi:
             "post",
             f"farms/{farm_id}/workers/{worker_id}/command",
             command
-=======
-        command: str,
-        data: dict = None
-    ):
-        """Alias to execute a command"""
-        body = {"command": command}
-
-        if data is not None:
-            body["data"] = data
-
-        await self._request(
-            self, 
-            "post", 
-            f"farms/{farm_id}/workers/{worker_id}/command", 
-            body
->>>>>>> c5dd508 (Work in progress)
         )
 
     async def get_farms(self) -> List:
@@ -112,7 +91,6 @@ class HiveOsApi:
         else:
             command = {"command": "miner", "data": {"action": "stop"}}
 
-<<<<<<< HEAD
         await self._command(farm_id, worker_id, command)
 
     async def worker_shutdown(self, farm_id: int, worker_id: int):
@@ -122,9 +100,3 @@ class HiveOsApi:
     async def get_account_profile(self):
         """Get the account profile for the user with the associated access token."""
         return await self._request("get", "account/profile")
-=======
-        await self._command(farm_id, worker_id, command, data)
-
-    async def worker_shutdown(self, farm_id: int, worker_id: int):
-        await self._command(farm_id, worker_id, "sreboot shutdown")
->>>>>>> c5dd508 (Work in progress)
