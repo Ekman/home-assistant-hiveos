@@ -9,7 +9,7 @@ services:
       - /home/hiveos/.cache
   # homeassistant.local:8123
   hass:
-    image: ghcr.io/home-assistant/home-assistant:stable
+    image: homeassistant/home-assistant:stable
     restart: unless-stopped
     volumes:
       - ./hass:/config
