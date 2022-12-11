@@ -1,8 +1,13 @@
 """Main entity that controls the miner"""
 from datetime import timedelta
+<<<<<<< HEAD
 import logging
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import CONF_ACCESS_TOKEN
+=======
+from homeassistant.components.switch import SwitchEntity, PLATFORM_SCHEMA
+from homeassistant.const import CONF_ACCESS_TOKEN, CONF_URL, CONF_ENTITY_ID
+>>>>>>> c5dd508 (Work in progress)
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .hiveos import HiveOsApi, HiveOsWorkerParams
 from .const import DOMAIN
@@ -32,6 +37,13 @@ async def async_setup_entry(hass, entry, async_add_devices):
     async_add_devices(worker_entities)
 
     return True
+
+    def worker_shutdown(data_call):
+        entity_id = data_call.get(CONF_ENTITY_ID)
+        entity = hass.get(entity_id)
+        entity.shutdown()
+
+    hass.services.register(DOMAIN, "worker_shutdown", worker_shutdown)
 
 class HiveOsWorker(SwitchEntity):
     """Main entity to switch the worker on or off"""
@@ -151,3 +163,9 @@ class HiveOsWorker(SwitchEntity):
         )
 
         self._assumed_next_state = 1
+
+    async def shutdown(self):
+        await self._hiveos.worker_shutdown(
+            self._params["farm_id"],
+            self._params["unique_id"]
+        )
