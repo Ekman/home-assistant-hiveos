@@ -7,6 +7,7 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from .hiveos import HiveOsApi, HiveOsWorkerParams
 from .const import DOMAIN
+import logging
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_ACCESS_TOKEN): cv.string,
@@ -14,6 +15,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 SCAN_INTERVAL = timedelta(minutes=1)
+
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Initial setup for the workers. Download and identify all workers."""

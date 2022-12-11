@@ -1,6 +1,10 @@
 """Interact with the HiveOS API"""
 from typing import List, TypedDict
 from aiohttp import ClientSession, ClientResponse
+import logging
+from .exceptions import HiveOsUnauthorizedException
+
+_LOGGER = logging.getLogger(__name__)
 
 class HiveOsWorkerParams(TypedDict):
     """For easy reference of which params we use from the API"""
@@ -36,11 +40,14 @@ class HiveOsApi:
             method, f"{self.host}/{path}", json=body, headers=headers
         )
 
+        if response.status == 401:
+            raise HiveOsUnauthorizedException()
+
         body = await response.json()
 
         return body["data"] if "data" in body else body
     
-    async def _command(self, farm_id: int, worker_id: int, command: str, data: Dict = None):
+    async def _command(self, farm_id: int, worker_id: int, command: str, data: dict = None):
         """Alias to execute a command"""
         body = {"command": command}
 
