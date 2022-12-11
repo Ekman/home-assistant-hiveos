@@ -1,0 +1,6 @@
+worker_shutdown:
+  description: Shut down the operating system of the worker
+  fields:
+    entity_id:
+      description: ID of the HiveOS worker to shutdow
+      example: hiveos.worker_foo
