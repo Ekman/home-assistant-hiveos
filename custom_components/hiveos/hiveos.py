@@ -39,6 +39,15 @@ class HiveOsApi:
         body = await response.json()
 
         return body["data"] if "data" in body else body
+    
+    async def _command(self, farm_id: int, worker_id: int, command: str, data: Dict = None):
+        """Alias to execute a command"""
+        body = {"command": command}
+
+        if data is not None:
+            body["data"] = data
+
+        await self._request(self, "post", f"farms/{farm_id}/workers/{worker_id}/command", body)
 
     async def get_farms(self) -> List:
         """GET all farms"""
@@ -54,12 +63,13 @@ class HiveOsApi:
 
     async def worker_set_state(self, farm_id: int, worker_id: int, state: bool = True):
         """Set a worker to start/stop"""
-        if state:
-            params = {"command": "reboot"}
-        else:
-            params = {
-                "command": "miner",
-                "data": {"action": "stop"}
-            }
+        command = None
+        data = None
 
-        await self._request("post", f"farms/{farm_id}/workers/{worker_id}/command", params)
+        if state:
+            command = "reboot"
+        else:
+            command = "miner"
+            data = {"action": "stop"}
+
+        await self._command(farm_id, worker_id, command, data)
