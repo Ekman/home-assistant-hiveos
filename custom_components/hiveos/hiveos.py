@@ -96,3 +96,7 @@ class HiveOsApi:
     async def worker_shutdown(self, farm_id: int, worker_id: int):
         """Shutdown a worker"""
         await self._command(farm_id, worker_id, {"command": "sreboot shutdown"})
+
+    async def get_account_profile(self):
+        """Get the account profile for the user with the associated access token."""
+        return await self._request("get", "account/profile")

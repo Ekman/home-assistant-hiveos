@@ -5,15 +5,7 @@ from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import DOMAIN
 from .hiveos import HiveOsApi
-from .exceptions import HiveOsApiException
-
-async def validate_auth(access_token: str, hass: core.HomeAssistant) -> None:
-    """Validate that the provided access token is correct"""
-    session = async_get_clientsession(hass)
-
-    hiveos = HiveOsApi(session, access_token)
-
-    await hiveos.get_farms()
+from .exceptions import HiveOsAipUnauthorizedException
 
 class HiveOsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Configuration flow"""
@@ -24,12 +16,16 @@ class HiveOsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
-                access_token = user_input[CONF_ACCESS_TOKEN]
+                # Validate that the provided access token is correct
+                session = async_get_clientsession(self.hass)
+                hiveos = HiveOsApi(session, user_input[CONF_ACCESS_TOKEN])
+                account_profile = await hiveos.get_account_profile()
 
-                await validate_auth(access_token, self.hass)
-
-                return self.async_create_entry(title="Credentials", data=user_input)
-            except HiveOsApiException:
+                return self.async_create_entry(
+                    title=account_profile["login"],
+                    data=user_input
+                )
+            except HiveOsAipUnauthorizedException:
                 errors[CONF_ACCESS_TOKEN] = "auth"
 
         schema = vol.Schema({
