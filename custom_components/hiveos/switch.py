@@ -6,7 +6,6 @@ from homeassistant.const import CONF_ACCESS_TOKEN, CONF_URL
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers import entity_platform
 from .hiveos import HiveOsApi, HiveOsWorkerParams
 from .const import DOMAIN
 
