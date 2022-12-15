@@ -1,5 +1,6 @@
 """Main entity that controls the miner"""
 from datetime import timedelta
+import logging
 from homeassistant.components.switch import SwitchEntity, PLATFORM_SCHEMA
 from homeassistant.const import CONF_ACCESS_TOKEN, CONF_URL
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -8,7 +9,6 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import entity_platform
 from .hiveos import HiveOsApi, HiveOsWorkerParams
 from .const import DOMAIN
-import logging
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_ACCESS_TOKEN): cv.string,
@@ -19,24 +19,12 @@ SCAN_INTERVAL = timedelta(minutes=1)
 
 _LOGGER = logging.getLogger(__name__)
 
-SCHEMA_WORKER_SHUTDOWN = cv.make_entity_service_schema(
-    {vol.Required(CONF_ENTITY_ID): cv.string}
-)
-
-SERVICE_WORKER_SHUTDOWN = "worker_shutdown"
-
 async def async_setup_entry(hass, entry, async_add_devices):
     """Initial setup for the workers. Download and identify all workers."""
     access_token = entry.data.get(CONF_ACCESS_TOKEN)
     url = entry.data.get(CONF_URL)
 
     platform = entity_platform.async_get_current_platform()
-
-    platform.async_register_entity_service(
-        SERVICE_WORKER_SHUTDOWN,
-        SCHEMA_WORKER_SHUTDOWN,
-        "shutdown",
-    )
 
     session = async_get_clientsession(hass)
 
@@ -69,8 +57,16 @@ class HiveOsWorker(SwitchEntity):
         params = {
             "unique_id": worker["id"],
             "name": worker["name"],
-            "gpus_online": worker["stats"]["gpus_online"] if "stats" in worker and "gpus_online" in worker["stats"] else 0,
-            "gpus_offline": worker["stats"]["gpus_offline"] if "stats" in worker and "gpus_offline" in worker["stats"] else 0,
+            "gpus_online": (
+                worker["stats"]["gpus_online"]
+                if "stats" in worker and "gpus_online" in worker["stats"]
+                else 0
+            ),
+            "gpus_offline": (
+                worker["stats"]["gpus_offline"]
+                if "stats" in worker and "gpus_offline" in worker["stats"]
+                else 0
+            ),
             "farm_id": worker["farm_id"],
             "version": worker["versions"]["hive"],
             "farm_name": farm["name"],
@@ -135,8 +131,16 @@ class HiveOsWorker(SwitchEntity):
                 self._params["unique_id"]
             )
 
-            self._params["gpus_online"] = worker["stats"]["gpus_online"] if "stats" in worker and "gpus_online" in worker["stats"] else 0
-            self._params["gpus_offline"] = worker["stats"]["gpus_offline"] if "stats" in worker and "gpus_offline" in worker["stats"] else 0
+            self._params["gpus_online"] = (
+                worker["stats"]["gpus_online"]
+                if "stats" in worker and "gpus_online" in worker["stats"]
+                else 0
+            )
+            self._params["gpus_offline"] = (
+                worker["stats"]["gpus_offline"]
+                if "stats" in worker and "gpus_offline" in worker["stats"]
+                else 0
+            )
             self._params["online"] = worker["stats"]["online"]
 
     async def async_turn_on(self, **kwargs):
