@@ -24,7 +24,7 @@ Install using [Home Assistant Community Store (HACS)](https://hacs.xyz/).
 
 ## Configuration
 
-Navigate to `Settings -> Devices & Services -> Integrations`. Click `+ Add Integration`, find and configure HiveOS.
+Navigate to `Settings -> Devices & Services -> Integrations`. Click `+ Add Integration`, find and configure HiveOS. You will need to provide a personal API token to the integration, which you can create [here](https://id.hiveon.com/auth/realms/id/account/sessions).
 
 ## Versioning
 
