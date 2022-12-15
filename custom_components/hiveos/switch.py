@@ -170,6 +170,7 @@ class HiveOsWorker(SwitchEntity):
         self._assumed_next_state = 1
 
     async def worker_shutdown(self):
+        """Shutdown the worker."""
         if not self.available:
             _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
         else:
