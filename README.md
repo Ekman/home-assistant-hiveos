@@ -24,13 +24,12 @@ Install using [Home Assistant Community Store (HACS)](https://hacs.xyz/).
 
 ## Configuration
 
-Add this to your Home Assistant configuration:
+Follow these steps to configure the integration:
 
-```yaml
-switch:
-  - platform: hiveos
-    access_token: !secret hiveos_access_token
-```
+1. Navigate to `Settings -> Devices & Services -> Integrations`.
+2. Click `+ Add Integration`.
+3. Find **HiveOS**.
+4. [Generate a personal API token](https://id.hiveon.com/auth/realms/id/account/sessions) and provide it to the integration.
 
 ## Versioning
 

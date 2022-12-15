@@ -1,8 +1,8 @@
 """Interact with the HiveOS API"""
-from typing import List, TypedDict
-from aiohttp import ClientSession, ClientResponse
+from typing import List, TypedDict, Optional
 import logging
-from .exceptions import HiveOsUnauthorizedException
+from aiohttp import ClientSession, ClientResponse
+from .exceptions import HiveOsAipUnauthorizedException, HiveOsApiException
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,6 +16,11 @@ class HiveOsWorkerParams(TypedDict):
     version: str
     farm_name: str
     online: bool
+
+class HiveOsCommand(TypedDict):
+    """A HiveOs command"""
+    command: str
+    data: Optional[dict]
 
 class HiveOsApi:
     """Interact with the HiveOS API"""
@@ -41,20 +46,31 @@ class HiveOsApi:
         )
 
         if response.status == 401:
-            raise HiveOsUnauthorizedException()
+            raise HiveOsAipUnauthorizedException()
+
+        # _LOGGER.error("Response from request: %d", response.status)
 
         body = await response.json()
 
-        return body["data"] if "data" in body else body
-    
-    async def _command(self, farm_id: int, worker_id: int, command: str, data: dict = None):
+        json = body["data"] if "data" in body else body
+
+        if response.status > 200:
+            raise HiveOsApiException(f"Failed response: {response.status} {json}")
+
+        return json
+
+    async def _command(
+        self,
+        farm_id: int,
+        worker_id: int,
+        command: HiveOsCommand
+    ):
         """Alias to execute a command"""
-        body = {"command": command}
-
-        if data is not None:
-            body["data"] = data
-
-        await self._request(self, "post", f"farms/{farm_id}/workers/{worker_id}/command", body)
+        return await self._request(
+            "post",
+            f"farms/{farm_id}/workers/{worker_id}/command",
+            command
+        )
 
     async def get_farms(self) -> List:
         """GET all farms"""
@@ -70,13 +86,17 @@ class HiveOsApi:
 
     async def worker_set_state(self, farm_id: int, worker_id: int, state: bool = True):
         """Set a worker to start/stop"""
-        command = None
-        data = None
-
         if state:
-            command = "reboot"
+            command = {"command": "reboot", "data": None}
         else:
-            command = "miner"
-            data = {"action": "stop"}
+            command = {"command": "miner", "data": {"action": "stop"}}
 
-        await self._command(farm_id, worker_id, command, data)
+        await self._command(farm_id, worker_id, command)
+
+    async def worker_shutdown(self, farm_id: int, worker_id: int):
+        """Shutdown a worker"""
+        await self._command(farm_id, worker_id, {"command": "sreboot shutdown"})
+
+    async def get_account_profile(self):
+        """Get the account profile for the user with the associated access token."""
+        return await self._request("get", "account/profile")

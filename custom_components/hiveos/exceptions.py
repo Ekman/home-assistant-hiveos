@@ -1,5 +1,10 @@
-class HiveOsException(Exception):
-    pass
+"""All exceptions for this package"""
 
-class HiveOsUnauthorizedException(Exception):
-    pass
+class HiveOsException(Exception):
+    """Base exception for this package"""
+
+class HiveOsApiException(HiveOsException):
+    """An exception that occurs in the HiveOS API"""
+
+class HiveOsAipUnauthorizedException(HiveOsApiException):
+    """An exception that indicates that the API credentials are incorrect"""
