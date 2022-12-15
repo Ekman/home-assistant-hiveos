@@ -1,18 +1,12 @@
 """Main entity that controls the miner"""
 from datetime import timedelta
 import logging
-from homeassistant.components.switch import SwitchEntity, PLATFORM_SCHEMA
-from homeassistant.const import CONF_ACCESS_TOKEN, CONF_URL
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
 from .hiveos import HiveOsApi, HiveOsWorkerParams
 from .const import DOMAIN
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_ACCESS_TOKEN): cv.string,
-    vol.Optional(CONF_URL, default="https://api2.hiveos.farm/api/v2"): cv.string
-})
 
 SCAN_INTERVAL = timedelta(minutes=1)
 
@@ -21,11 +15,10 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, entry, async_add_devices):
     """Initial setup for the workers. Download and identify all workers."""
     access_token = entry.data.get(CONF_ACCESS_TOKEN)
-    url = entry.data.get(CONF_URL)
 
     session = async_get_clientsession(hass)
 
-    hiveos = HiveOsApi(session, access_token, url)
+    hiveos = HiveOsApi(session, access_token)
 
     farms = await hiveos.get_farms()
 
