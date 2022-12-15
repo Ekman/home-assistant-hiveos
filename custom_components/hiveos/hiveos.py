@@ -51,7 +51,7 @@ class HiveOsApi:
         # _LOGGER.error("Response from request: %d", response.status)
 
         body = await response.json()
-        
+
         json = body["data"] if "data" in body else body
 
         if response.status > 200:
