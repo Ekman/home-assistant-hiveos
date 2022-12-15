@@ -19,7 +19,7 @@ SCAN_INTERVAL = timedelta(minutes=1)
 
 _LOGGER = logging.getLogger(__name__)
 
-WORKER_SHUTDOWN_SCHEMA = cv.make_entity_service_schema(
+SCHEMA_WORKER_SHUTDOWN = cv.make_entity_service_schema(
     {vol.Required(CONF_ENTITY_ID): cv.string}
 )
 
@@ -34,7 +34,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
     platform.async_register_entity_service(
         SERVICE_WORKER_SHUTDOWN,
-        WORKER_SHUTDOWN_SCHEMA,
+        SCHEMA_WORKER_SHUTDOWN,
         "shutdown",
     )
 
