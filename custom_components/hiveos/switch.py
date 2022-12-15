@@ -2,10 +2,8 @@
 from datetime import timedelta
 import logging
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import CONF_ACCESS_TOKEN, CONF_ENTITY_ID
+from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import entity_platform
 from .hiveos import HiveOsApi, HiveOsWorkerParams
 from .const import DOMAIN
@@ -14,41 +12,39 @@ SCAN_INTERVAL = timedelta(minutes=1)
 
 _LOGGER = logging.getLogger(__name__)
 
-WORKER_SHUTDOWN_SCHEMA = cv.make_entity_service_schema(
-    {vol.Required(CONF_ENTITY_ID): str}
-)
-
 SERVICE_WORKER_SHUTDOWN = "worker_shutdown"
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def get_hiveos_farms_create_entities(hiveos_client):
+    """Get all HiveOS farms and create entities from them"""
+    farms = await hiveos_client.get_farms()
+    worker_entities = []
+
+    for farm in farms:
+        workers = await hiveos_client.get_workers(farm["id"])
+
+        for worker in workers:
+            worker_entities.append(HiveOsWorker.create(hiveos_client, farm, worker))
+
+    return worker_entities
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
     """Initial setup for the workers. Download and identify all workers."""
-    access_token = entry.data.get(CONF_ACCESS_TOKEN)
+    access_token = config_entry.data.get(CONF_ACCESS_TOKEN)
+    session = async_get_clientsession(hass)
+
+    hiveos_client = HiveOsApi(session, access_token)
+
+    async_add_entities(
+        get_hiveos_farms_create_entities(hiveos_client)
+    )
 
     platform = entity_platform.async_get_current_platform()
 
     platform.async_register_entity_service(
         SERVICE_WORKER_SHUTDOWN,
-        WORKER_SHUTDOWN_SCHEMA,
-        "worker_shutdown",
+        {},
+        "async_worker_shutdown",
     )
-
-    session = async_get_clientsession(hass)
-
-    hiveos = HiveOsApi(session, access_token)
-
-    farms = await hiveos.get_farms()
-
-    worker_entities = []
-
-    for farm in farms:
-        workers = await hiveos.get_workers(farm["id"])
-
-        for worker in workers:
-            worker_entities.append(HiveOsWorker.create(hiveos, farm, worker))
-
-    async_add_devices(worker_entities)
-
-    return True
 
 class HiveOsWorker(SwitchEntity):
     """Main entity to switch the worker on or off"""
@@ -169,12 +165,12 @@ class HiveOsWorker(SwitchEntity):
 
         self._assumed_next_state = 1
 
-    async def worker_shutdown(self):
+    async def async_worker_shutdown(self):
         """Shutdown the worker."""
         if not self.available:
             _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
         else:
-            self._hiveos.worker_shutdown(
+            await self._hiveos.worker_shutdown(
                 self._params["farm_id"],
                 self._params["unique_id"]
             )
