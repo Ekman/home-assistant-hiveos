@@ -5,6 +5,7 @@ from homeassistant.const import CONF_ACCESS_TOKEN, CONF_URL
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import entity_platform
 from .hiveos import HiveOsApi, HiveOsWorkerParams
 from .const import DOMAIN
 import logging
@@ -18,12 +19,24 @@ SCAN_INTERVAL = timedelta(minutes=1)
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+WORKER_SHUTDOWN_SCHEMA = cv.make_entity_service_schema(
+    {vol.Required(CONF_ENTITY_ID): cv.string}
+)
+
+SERVICE_WORKER_SHUTDOWN = "worker_shutdown"
+
+async def async_setup_entry(hass, entry, async_add_devices):
     """Initial setup for the workers. Download and identify all workers."""
-    access_token = (discovery_info[CONF_ACCESS_TOKEN] if discovery_info is not None
-        else config[CONF_ACCESS_TOKEN])
-    url = (discovery_info[CONF_URL] if discovery_info is not None
-        else config[CONF_URL])
+    access_token = entry.data.get(CONF_ACCESS_TOKEN)
+    url = entry.data.get(CONF_URL)
+
+    platform = entity_platform.async_get_current_platform()
+
+    platform.async_register_entity_service(
+        SERVICE_WORKER_SHUTDOWN,
+        WORKER_SHUTDOWN_SCHEMA,
+        "shutdown",
+    )
 
     session = async_get_clientsession(hass)
 
@@ -39,7 +52,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         for worker in workers:
             worker_entities.append(HiveOsWorker.create(hiveos, farm, worker))
 
-    async_add_entities(worker_entities)
+    async_add_devices(worker_entities)
+
+    return True
 
 class HiveOsWorker(SwitchEntity):
     """Main entity to switch the worker on or off"""
