@@ -1,5 +1,5 @@
 {
     "name": "HiveOS",
     "render_readme": true,
-    "domains": ["vacuum"]
+    "domains": ["switch"]
 }

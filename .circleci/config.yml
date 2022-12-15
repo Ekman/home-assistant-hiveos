@@ -23,7 +23,7 @@ jobs:
       - checkout
       - pip
       - run: pylint custom_components/hiveos # tests
-      - run: find . -name "*.json" -print0 | xargs -0I {} python3 -m json.tool {}
+      - run: find . -name "*.json" -type f -print0 | xargs -0I {} python3 -m json.tool {}
   test:
     docker:
       - image: cimg/python:3.9
