@@ -24,8 +24,6 @@ async def async_setup_entry(hass, entry, async_add_devices):
     access_token = entry.data.get(CONF_ACCESS_TOKEN)
     url = entry.data.get(CONF_URL)
 
-    platform = entity_platform.async_get_current_platform()
-
     session = async_get_clientsession(hass)
 
     hiveos = HiveOsApi(session, access_token, url)
