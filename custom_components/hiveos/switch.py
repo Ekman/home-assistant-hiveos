@@ -29,7 +29,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     platform.async_register_entity_service(
         SERVICE_WORKER_SHUTDOWN,
         WORKER_SHUTDOWN_SCHEMA,
-        "shutdown",
+        "worker_shutdown",
     )
 
     session = async_get_clientsession(hass)
@@ -168,3 +168,12 @@ class HiveOsWorker(SwitchEntity):
         )
 
         self._assumed_next_state = 1
+
+    async def worker_shutdown(self):
+        if not self.available:
+            _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
+        else:
+            self._hiveos.worker_shutdown(
+                self._params["farm_id"],
+                self._params["unique_id"]
+            )
