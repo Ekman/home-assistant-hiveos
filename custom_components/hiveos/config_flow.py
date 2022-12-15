@@ -29,7 +29,7 @@ class HiveOsConfigFlow(data_entry_flow.FlowHandler):
 
                 await validate_auth(access_token, self.hass)
 
-                return self.async_create_entry(data=user_input)
+                return self.async_create_entry(title="Credentials", data=user_input)
             except HiveOsApiException:
                 errors[CONF_ACCESS_TOKEN] = "auth"
 
