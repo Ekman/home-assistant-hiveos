@@ -1,6 +1,6 @@
 """Initial user configuration for the integration"""
 import voluptuous as vol
-from homeassistant import config_entries, core, data_entry_flow
+from homeassistant import config_entries, core
 from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import DOMAIN
@@ -15,8 +15,7 @@ async def validate_auth(access_token: str, hass: core.HomeAssistant) -> None:
 
     await hiveos.get_farms()
 
-@config_entries.HANDLERS.register(DOMAIN)
-class HiveOsConfigFlow(data_entry_flow.FlowHandler):
+class HiveOsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Configuration flow"""
     VERSION = 1
 
