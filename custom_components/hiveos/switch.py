@@ -49,7 +49,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class HiveOsWorker(SwitchEntity):
     """Main entity to switch the worker on or off"""
     def __init__(self, hiveos: HiveOsApi, params: HiveOsWorkerParams):
-        self._hiveos_client = hiveos
+        self._hiveos = hiveos
         self._params = params
         self._assumed_next_state = None
 
@@ -128,7 +128,7 @@ class HiveOsWorker(SwitchEntity):
             self._params["gpus_online"] = self._assumed_next_state
             self._assumed_next_state = None
         else:
-            worker = await self._hiveos_client.get_worker(
+            worker = await self._hiveos.get_worker(
                 self._params["farm_id"],
                 self._params["unique_id"]
             )
@@ -157,7 +157,7 @@ class HiveOsWorker(SwitchEntity):
 
     async def _set_state(self, state: bool):
         """Set the worker to start/stop"""
-        await self._hiveos_client.worker_set_state(
+        await self._hiveos.worker_set_state(
             self._params["farm_id"],
             self._params["unique_id"],
             state
@@ -172,7 +172,7 @@ class HiveOsWorker(SwitchEntity):
         if not self.available:
             _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
         else:
-            await self._hiveos_client.worker_shutdown(
+            await self._hiveos.worker_shutdown(
                 self._params["farm_id"],
                 self._params["unique_id"]
             )
