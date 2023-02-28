@@ -35,7 +35,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     hiveos_client = HiveOsApi(session, access_token)
 
     async_add_entities(
-        get_hiveos_farms_create_entities(hiveos_client)
+        await get_hiveos_farms_create_entities(hiveos_client)
     )
 
     platform = entity_platform.async_get_current_platform()
@@ -167,6 +167,8 @@ class HiveOsWorker(SwitchEntity):
 
     async def async_worker_shutdown(self):
         """Shutdown the worker."""
+        _LOGGER.debug("Calling shutdown on worker \"%s\", farm ID \"%s\" and unique ID \"%s\".", self.name, self._params["farm_id"], self._params["unique_id"])
+
         if not self.available:
             _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
         else:
