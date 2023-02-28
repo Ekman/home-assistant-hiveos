@@ -4,6 +4,7 @@ import logging
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import entity_platform
 from .hiveos import HiveOsApi, HiveOsWorkerParams
 from .const import DOMAIN
 
@@ -11,16 +12,11 @@ SCAN_INTERVAL = timedelta(minutes=1)
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass, entry, async_add_devices):
-    """Initial setup for the workers. Download and identify all workers."""
-    access_token = entry.data.get(CONF_ACCESS_TOKEN)
+SERVICE_WORKER_SHUTDOWN = "worker_shutdown"
 
-    session = async_get_clientsession(hass)
-
-    hiveos = HiveOsApi(session, access_token)
-
+async def get_hiveos_farms_create_entities(hiveos):
+    """Get all HiveOS farms and create entities from them"""
     farms = await hiveos.get_farms()
-
     worker_entities = []
 
     for farm in farms:
@@ -29,9 +25,26 @@ async def async_setup_entry(hass, entry, async_add_devices):
         for worker in workers:
             worker_entities.append(HiveOsWorker.create(hiveos, farm, worker))
 
-    async_add_devices(worker_entities)
+    return worker_entities
 
-    return True
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Initial setup for the workers. Download and identify all workers."""
+    access_token = config_entry.data.get(CONF_ACCESS_TOKEN)
+    session = async_get_clientsession(hass)
+
+    hiveos = HiveOsApi(session, access_token)
+
+    async_add_entities(
+        await get_hiveos_farms_create_entities(hiveos)
+    )
+
+    platform = entity_platform.async_get_current_platform()
+
+    platform.async_register_entity_service(
+        SERVICE_WORKER_SHUTDOWN,
+        {},
+        "async_worker_shutdown",
+    )
 
 class HiveOsWorker(SwitchEntity):
     """Main entity to switch the worker on or off"""
@@ -151,3 +164,20 @@ class HiveOsWorker(SwitchEntity):
         )
 
         self._assumed_next_state = 1
+
+    async def async_worker_shutdown(self):
+        """Shutdown the worker."""
+        _LOGGER.debug(
+            "Calling shutdown on worker \"%s\", farm ID \"%s\" and unique ID \"%s\".",
+            self.name,
+            self._params["farm_id"],
+            self._params["unique_id"]
+        )
+
+        if not self.available:
+            _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
+        else:
+            await self._hiveos.worker_shutdown(
+                self._params["farm_id"],
+                self._params["unique_id"]
+            )
