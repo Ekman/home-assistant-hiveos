@@ -167,7 +167,12 @@ class HiveOsWorker(SwitchEntity):
 
     async def async_worker_shutdown(self):
         """Shutdown the worker."""
-        _LOGGER.debug("Calling shutdown on worker \"%s\", farm ID \"%s\" and unique ID \"%s\".", self.name, self._params["farm_id"], self._params["unique_id"])
+        _LOGGER.debug(
+            "Calling shutdown on worker \"%s\", farm ID \"%s\" and unique ID \"%s\".",
+            self.name,
+            self._params["farm_id"],
+            self._params["unique_id"]
+        )
 
         if not self.available:
             _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
