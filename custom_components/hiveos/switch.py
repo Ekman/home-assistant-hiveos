@@ -14,16 +14,16 @@ _LOGGER = logging.getLogger(__name__)
 
 SERVICE_WORKER_SHUTDOWN = "worker_shutdown"
 
-async def get_hiveos_farms_create_entities(hiveos_client):
+async def get_hiveos_farms_create_entities(hiveos):
     """Get all HiveOS farms and create entities from them"""
-    farms = await hiveos_client.get_farms()
+    farms = await hiveos.get_farms()
     worker_entities = []
 
     for farm in farms:
-        workers = await hiveos_client.get_workers(farm["id"])
+        workers = await hiveos.get_workers(farm["id"])
 
         for worker in workers:
-            worker_entities.append(HiveOsWorker.create(hiveos_client, farm, worker))
+            worker_entities.append(HiveOsWorker.create(hiveos, farm, worker))
 
     return worker_entities
 
@@ -32,10 +32,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     access_token = config_entry.data.get(CONF_ACCESS_TOKEN)
     session = async_get_clientsession(hass)
 
-    hiveos_client = HiveOsApi(session, access_token)
+    hiveos = HiveOsApi(session, access_token)
 
     async_add_entities(
-        await get_hiveos_farms_create_entities(hiveos_client)
+        await get_hiveos_farms_create_entities(hiveos)
     )
 
     platform = entity_platform.async_get_current_platform()
@@ -48,8 +48,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class HiveOsWorker(SwitchEntity):
     """Main entity to switch the worker on or off"""
-    def __init__(self, hiveos_client: HiveOsApi, params: HiveOsWorkerParams):
-        self._hiveos_client = hiveos_client
+    def __init__(self, hiveos: HiveOsApi, params: HiveOsWorkerParams):
+        self._hiveos_client = hiveos
         self._params = params
         self._assumed_next_state = None
 
