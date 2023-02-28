@@ -64,6 +64,9 @@ class HiveOsApi:
         command: HiveOsCommand
     ):
         """Alias to execute a command"""
+        if "data" not in command:
+            command["data"] = None
+
         _LOGGER.debug("Sending command: %s", command)
 
         return await self._request(
@@ -87,7 +90,7 @@ class HiveOsApi:
     async def worker_set_state(self, farm_id: int, worker_id: int, state: bool = True):
         """Set a worker to start/stop"""
         if state:
-            command = {"command": "reboot", "data": None}
+            command = {"command": "reboot"}
         else:
             command = {"command": "miner", "data": {"action": "stop"}}
 
@@ -95,7 +98,7 @@ class HiveOsApi:
 
     async def worker_shutdown(self, farm_id: int, worker_id: int):
         """Shutdown a worker"""
-        await self._command(farm_id, worker_id, {"command": "shutdown", "data": None})
+        await self._command(farm_id, worker_id, {"command": "shutdown"})
 
     async def get_account_profile(self):
         """Get the account profile for the user with the associated access token."""
