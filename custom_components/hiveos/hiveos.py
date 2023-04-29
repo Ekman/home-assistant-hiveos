@@ -105,3 +105,7 @@ class HiveOsApi:
     async def get_account_profile(self):
         """Get the account profile for the user with the associated access token."""
         return await self._request("get", "account/profile")
+
+    async def worker_upgrade(self, farm_id: int, worker_id: int):
+        """Upgrade the worker to the latest version"""
+        await self._command(farm_id, worker_id, {"command": "upgrade"})

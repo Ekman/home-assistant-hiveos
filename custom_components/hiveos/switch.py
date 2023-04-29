@@ -12,7 +12,10 @@ SCAN_INTERVAL = timedelta(minutes=1)
 
 _LOGGER = logging.getLogger(__name__)
 
-SERVICE_WORKER_SHUTDOWN = "worker_shutdown"
+SERVICES = [
+    "worker_shutdown",
+    "worker_upgrade",
+]
 
 async def get_hiveos_farms_create_entities(hiveos):
     """Get all HiveOS farms and create entities from them"""
@@ -40,11 +43,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     platform = entity_platform.async_get_current_platform()
 
-    platform.async_register_entity_service(
-        SERVICE_WORKER_SHUTDOWN,
-        {},
-        "async_worker_shutdown",
-    )
+    for service in SERVICES:
+        platform.async_register_entity_service(
+            service,
+            {},
+            f"async_{service}",
+        )
 
 class HiveOsWorker(SwitchEntity):
     """Main entity to switch the worker on or off"""
@@ -178,6 +182,23 @@ class HiveOsWorker(SwitchEntity):
             _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
         else:
             await self._hiveos.worker_shutdown(
+                self._params["farm_id"],
+                self._params["unique_id"]
+            )
+
+    async def async_worker_upgrade(self):
+        """Shutdown the worker."""
+        _LOGGER.debug(
+            "Calling upgrade on worker \"%s\", farm ID \"%s\" and unique ID \"%s\".",
+            self.name,
+            self._params["farm_id"],
+            self._params["unique_id"]
+        )
+
+        if not self.available:
+            _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
+        else:
+            await self._hiveos.worker_upgrade(
                 self._params["farm_id"],
                 self._params["unique_id"]
             )

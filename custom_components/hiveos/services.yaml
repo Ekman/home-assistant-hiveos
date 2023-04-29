@@ -1,7 +1,14 @@
 worker_shutdown:
-  name: Worker shutdown
-  description: Shut down the operating system of a worker.
-  target:
-    entity:
-      integration: hiveos
-      domain: switch
+    name: Worker shutdown
+    description: Shut down the operating system of a worker.
+    target:
+        entity:
+            integration: hiveos
+            domain: switch
+worker_upgrade:
+    name: Worker upgrade
+    description: Upgrade the operating system of a worker.
+    target:
+        entity:
+            integration: hiveos
+            domain: switch
