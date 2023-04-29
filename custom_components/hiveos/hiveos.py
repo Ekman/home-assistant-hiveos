@@ -93,7 +93,7 @@ class HiveOsApi:
         command = {
             "command": "miner",
             "data": {
-                "action": "start" if state else "stop"
+                "action": "restart" if state else "stop"
             }
         }
 
