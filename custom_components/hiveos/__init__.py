@@ -9,10 +9,10 @@ PLATFORMS = [Platform.SWITCH]
 
 async def get_hiveos_workers(hiveos_api: hiveos.HiveOsApi):
     """Get all HiveOS workes"""
-    farms = await hiveos.get_farms()
+    farms = await hiveos_api.get_farms()
 
     workers = await asyncio.gather(
-        *[hiveos.get_workers(farm["id"]) for farm in farms]
+        *[hiveos_api.get_workers(farm["id"]) for farm in farms]
     )
 
     # Flatten

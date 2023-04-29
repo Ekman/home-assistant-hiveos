@@ -1,5 +1,6 @@
 """Main entity that controls the miner"""
 import logging
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers import entity_platform
 from . import const, hiveos
@@ -32,9 +33,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             f"async_{service}",
         )
 
-class HiveOsWorker(SwitchEntity):
+class HiveOsWorker(CoordinatorEntity, SwitchEntity):
     """Main entity to switch the worker on or off"""
-    def __init__(self, hiveos_api: hiveos.HiveOsApi, params: hiveos.HiveOsWorkerParams):
+    def __init__(
+        self,
+        coordinator,
+        hiveos_api: hiveos.HiveOsApi,
+        params: hiveos.HiveOsWorkerParams
+    ):
+        super().__init__(coordinator)
         self._hiveos_api = hiveos_api
         self._params = params
 
