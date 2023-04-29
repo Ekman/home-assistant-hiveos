@@ -6,7 +6,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from .hiveos import HiveOsApi, HiveOsWorkerParams
+from . import hiveos
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class HiveOsCoordinator(DataUpdateCoordinator):
     def __init__(
         self,
         hass,
-        hiveos: HiveOsApi,
+        hiveos: hiveos.HiveOsApi,
         farm_id: int,
         worker_id: int
     ):
@@ -31,7 +31,7 @@ class HiveOsCoordinator(DataUpdateCoordinator):
         self._worker_id = worker_id
 
     @property
-    def hiveos(self) -> HiveOsApi:
+    def hiveos(self) -> hiveos.HiveOsApi:
         """Immutable HiveOsApi"""
         return self._hiveos
 
@@ -44,7 +44,7 @@ class HiveOsCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Could not update data for \"%s\" due to: %s", self.name, ex)
             raise UpdateFailed from ex
 
-    async def update_and_create_params(self) -> HiveOsWorkerParams:
+    async def update_and_create_params(self) -> hiveos.HiveOsWorkerParams:
         """Update and create the latest version of params."""
         worker = await self._hiveos.get_worker(
             self._farm_id,

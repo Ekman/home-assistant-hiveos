@@ -2,11 +2,10 @@
 from datetime import timedelta
 import logging
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import CONF_ACCESS_TOKEN
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import entity_platform
 from .hiveos import HiveOsApi, HiveOsWorkerParams
-from .const import DOMAIN
+from . import const
 
 _LOGGER = logging.getLogger(__name__)
 

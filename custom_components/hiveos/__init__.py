@@ -1,7 +1,9 @@
 """Control your HiveOS crypto miners using Home Assistant"""
+import asyncio
 from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from . import const, coordinator
+from homeassistant.const import CONF_ACCESS_TOKEN
+from . import const, coordinator, hiveos
 
 PLATFORMS = [Platform.SWITCH]
 
@@ -21,7 +23,7 @@ async def async_setup_entry(hass, config_entry) -> bool:
     access_token = config_entry.data.get(CONF_ACCESS_TOKEN)
     session = async_get_clientsession(hass)
 
-    hiveos = HiveOsApi(session, access_token)
+    hiveos = hiveos.HiveOsApi(session, access_token)
 
     workers = await get_hiveos_workers(hiveos)
 
