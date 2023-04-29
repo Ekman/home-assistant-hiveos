@@ -1,14 +1,9 @@
 """Main entity that controls the miner"""
-from datetime import timedelta
 import logging
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import CONF_ACCESS_TOKEN
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import entity_platform
-from .hiveos import HiveOsApi, HiveOsWorkerParams
-from .const import DOMAIN
-
-SCAN_INTERVAL = timedelta(minutes=1)
+from . import const, hiveos
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,29 +12,17 @@ SERVICES = [
     "worker_upgrade",
 ]
 
-async def get_hiveos_farms_create_entities(hiveos):
-    """Get all HiveOS farms and create entities from them"""
-    farms = await hiveos.get_farms()
-    worker_entities = []
-
-    for farm in farms:
-        workers = await hiveos.get_workers(farm["id"])
-
-        for worker in workers:
-            worker_entities.append(HiveOsWorker.create(hiveos, farm, worker))
-
-    return worker_entities
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Initial setup for the workers. Download and identify all workers."""
-    access_token = config_entry.data.get(CONF_ACCESS_TOKEN)
-    session = async_get_clientsession(hass)
+    data = hass.data[const.DOMAIN][config_entry.entry_id]
 
-    hiveos = HiveOsApi(session, access_token)
-
-    async_add_entities(
-        await get_hiveos_farms_create_entities(hiveos)
-    )
+    async_add_entities([
+        HiveOsWorker(
+            coord,
+            coord.hiveos_api,
+            coord.data
+        ) for coord in data[const.COORDINATORS]
+    ])
 
     platform = entity_platform.async_get_current_platform()
 
@@ -50,37 +33,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             f"async_{service}",
         )
 
-class HiveOsWorker(SwitchEntity):
+class HiveOsWorker(CoordinatorEntity, SwitchEntity):
     """Main entity to switch the worker on or off"""
-    def __init__(self, hiveos: HiveOsApi, params: HiveOsWorkerParams):
-        self._hiveos = hiveos
+    def __init__(
+        self,
+        coordinator,
+        hiveos_api: hiveos.HiveOsApi,
+        params: hiveos.HiveOsWorkerParams
+    ):
+        super().__init__(coordinator)
+        self._hiveos_api = hiveos_api
         self._params = params
-        self._assumed_next_state = None
-
-    @staticmethod
-    def create(hiveos: HiveOsApi, farm, worker):
-        """Create a new instance from API data"""
-        params = {
-            "unique_id": worker["id"],
-            "name": worker["name"],
-            "gpus_online": (
-                worker["stats"]["gpus_online"]
-                if "stats" in worker and "gpus_online" in worker["stats"]
-                else 0
-            ),
-            "gpus_offline": (
-                worker["stats"]["gpus_offline"]
-                if "stats" in worker and "gpus_offline" in worker["stats"]
-                else 0
-            ),
-            "farm_id": worker["farm_id"],
-            "version": worker["versions"]["hive"],
-            "farm_name": farm["name"],
-            "online": worker["stats"]["online"],
-            "needs_upgrade": worker["needs_upgrade"]
-        }
-
-        return HiveOsWorker(hiveos, params)
 
     @property
     def unique_id(self) -> str:
@@ -98,15 +61,9 @@ class HiveOsWorker(SwitchEntity):
         return self._params["gpus_online"] > 0
 
     @property
-    def assumed_state(self) -> bool:
-        """Assume the next state after sending a command"""
-        return self._assumed_next_state is not None
-
-    @property
     def extra_state_attributes(self):
         """Extra attributes for the worker"""
         return {
-            "farm_name": self._params["farm_name"],
             "farm_id": self._params["farm_id"],
             "id": self._params["unique_id"]
         }
@@ -117,7 +74,7 @@ class HiveOsWorker(SwitchEntity):
         # See: https://developers.home-assistant.io/docs/device_registry_index/
         return {
             "identifiers": {
-                (DOMAIN, self._params["unique_id"])
+                (const.DOMAIN, self._params["unique_id"])
             },
             "name": self._params["name"],
             "sw_version": self._params["version"]
@@ -129,28 +86,14 @@ class HiveOsWorker(SwitchEntity):
         return (self._params["online"]
             and self._params["gpus_online"] + self._params["gpus_offline"] > 0)
 
-    async def async_update(self):
-        """Main update logic. Poll API and check state"""
-        if self._assumed_next_state is not None:
-            self._params["gpus_online"] = self._assumed_next_state
-            self._assumed_next_state = None
-        else:
-            worker = await self._hiveos.get_worker(
-                self._params["farm_id"],
-                self._params["unique_id"]
-            )
+    def _handle_coordinator_update(self):
+        """
+        Called by Home Assistant asking the vacuum to update to the latest state.
+        Can contain IO code.
+        """
+        self._params = self.coordinator.data
 
-            self._params["gpus_online"] = (
-                worker["stats"]["gpus_online"]
-                if "stats" in worker and "gpus_online" in worker["stats"]
-                else 0
-            )
-            self._params["gpus_offline"] = (
-                worker["stats"]["gpus_offline"]
-                if "stats" in worker and "gpus_offline" in worker["stats"]
-                else 0
-            )
-            self._params["online"] = worker["stats"]["online"]
+        self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs):
         """Turn the worker on"""
@@ -164,13 +107,11 @@ class HiveOsWorker(SwitchEntity):
 
     async def _set_state(self, state: bool):
         """Set the worker to start/stop"""
-        await self._hiveos.worker_set_state(
+        await self._hiveos_api.worker_set_state(
             self._params["farm_id"],
             self._params["unique_id"],
             state
         )
-
-        self._assumed_next_state = 1
 
     async def async_worker_shutdown(self):
         """Shutdown the worker."""
@@ -184,7 +125,7 @@ class HiveOsWorker(SwitchEntity):
         if not self.available:
             _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
         else:
-            await self._hiveos.worker_shutdown(
+            await self._hiveos_api.worker_shutdown(
                 self._params["farm_id"],
                 self._params["unique_id"]
             )
@@ -206,7 +147,7 @@ class HiveOsWorker(SwitchEntity):
                 self._params["version"]
             )
         else:
-            await self._hiveos.worker_upgrade(
+            await self._hiveos_api.worker_upgrade(
                 self._params["farm_id"],
                 self._params["unique_id"]
             )
