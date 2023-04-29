@@ -7,7 +7,7 @@ from . import const, coordinator, hiveos
 
 PLATFORMS = [Platform.SWITCH]
 
-async def get_hiveos_workers(hiveos):
+async def get_hiveos_workers(hiveos_api: hiveos.HiveOsApi):
     """Get all HiveOS workes"""
     farms = await hiveos.get_farms()
 
@@ -23,15 +23,15 @@ async def async_setup_entry(hass, config_entry) -> bool:
     access_token = config_entry.data.get(CONF_ACCESS_TOKEN)
     session = async_get_clientsession(hass)
 
-    hiveos = hiveos.HiveOsApi(session, access_token)
+    hiveos_api = hiveos.HiveOsApi(session, access_token)
 
-    workers = await get_hiveos_workers(hiveos)
+    workers = await get_hiveos_workers(hiveos_api)
 
     # Create the coordinators
     coords = [
         coordinator.HiveOsCoordinator(
             hass,
-            hiveos,
+            hiveos_api,
             worker["farm_id"],
             worker["id"]
         ) for worker in workers

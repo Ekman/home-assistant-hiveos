@@ -16,7 +16,7 @@ class HiveOsCoordinator(DataUpdateCoordinator):
     def __init__(
         self,
         hass,
-        hiveos: hiveos.HiveOsApi,
+        hiveos_api: hiveos.HiveOsApi,
         farm_id: int,
         worker_id: int
     ):
@@ -26,14 +26,14 @@ class HiveOsCoordinator(DataUpdateCoordinator):
             name=f"{farm_id}_{worker_id}",
             update_interval=timedelta(minutes=1),
         )
-        self._hiveos = hiveos
+        self._hiveos_api = hiveos_api
         self._farm_id = farm_id
         self._worker_id = worker_id
 
     @property
-    def hiveos(self) -> hiveos.HiveOsApi:
+    def hiveos_api(self) -> hiveos.HiveOsApi:
         """Immutable HiveOsApi"""
-        return self._hiveos
+        return self._hiveos_api
 
     async def _async_update_data(self):
         """Fetch data."""
@@ -46,7 +46,7 @@ class HiveOsCoordinator(DataUpdateCoordinator):
 
     async def update_and_create_params(self) -> hiveos.HiveOsWorkerParams:
         """Update and create the latest version of params."""
-        worker = await self._hiveos.get_worker(
+        worker = await self._hiveos_api.get_worker(
             self._farm_id,
             self._worker_id
         )

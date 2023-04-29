@@ -1,11 +1,8 @@
 """Main entity that controls the miner"""
-from datetime import timedelta
 import logging
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import entity_platform
-from .hiveos import HiveOsApi, HiveOsWorkerParams
-from . import const
+from . import const, hiveos
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,9 +15,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Initial setup for the workers. Download and identify all workers."""
     data = hass.data[const.DOMAIN][config_entry.entry_id]
 
-    async_add_entities(
-        [HiveOsWorker(coord, coord.hiveos, coord.data) for coord in data[const.COORDINATORS]]
-    )
+    async_add_entities([
+        hiveos.HiveOsWorker(
+            coord,
+            coord.hiveos_api,
+            coord.data
+        ) for coord in data[const.COORDINATORS]
+    ])
 
     platform = entity_platform.async_get_current_platform()
 
@@ -33,8 +34,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class HiveOsWorker(SwitchEntity):
     """Main entity to switch the worker on or off"""
-    def __init__(self, hiveos: HiveOsApi, params: HiveOsWorkerParams):
-        self._hiveos = hiveos
+    def __init__(self, hiveos_api: hiveos.HiveOsApi, params: hiveos.HiveOsWorkerParams):
+        self._hiveos_api = hiveos_api
         self._params = params
 
     @property
@@ -66,7 +67,7 @@ class HiveOsWorker(SwitchEntity):
         # See: https://developers.home-assistant.io/docs/device_registry_index/
         return {
             "identifiers": {
-                (DOMAIN, self._params["unique_id"])
+                (const.DOMAIN, self._params["unique_id"])
             },
             "name": self._params["name"],
             "sw_version": self._params["version"]
@@ -99,7 +100,7 @@ class HiveOsWorker(SwitchEntity):
 
     async def _set_state(self, state: bool):
         """Set the worker to start/stop"""
-        await self._hiveos.worker_set_state(
+        await self._hiveos_api.worker_set_state(
             self._params["farm_id"],
             self._params["unique_id"],
             state
@@ -117,7 +118,7 @@ class HiveOsWorker(SwitchEntity):
         if not self.available:
             _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
         else:
-            await self._hiveos.worker_shutdown(
+            await self._hiveos_api.worker_shutdown(
                 self._params["farm_id"],
                 self._params["unique_id"]
             )
@@ -139,7 +140,7 @@ class HiveOsWorker(SwitchEntity):
                 self._params["version"]
             )
         else:
-            await self._hiveos.worker_upgrade(
+            await self._hiveos_api.worker_upgrade(
                 self._params["farm_id"],
                 self._params["unique_id"]
             )
