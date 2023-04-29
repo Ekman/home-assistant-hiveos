@@ -105,7 +105,9 @@ class HiveOsWorker(SwitchEntity):
     def extra_state_attributes(self):
         """Extra attributes for the worker"""
         return {
-            "farm_name": self._params["farm_name"]
+            "farm_name": self._params["farm_name"],
+            "farm_id": self._params["farm_id"],
+            "id": self._params["unique_id"]
         }
 
     @property
