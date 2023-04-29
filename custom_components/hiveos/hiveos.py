@@ -89,10 +89,12 @@ class HiveOsApi:
 
     async def worker_set_state(self, farm_id: int, worker_id: int, state: bool = True):
         """Set a worker to start/stop"""
-        if state:
-            command = {"command": "reboot"}
-        else:
-            command = {"command": "miner", "data": {"action": "stop"}}
+        command = {
+            "command": "miner",
+            "data": {
+                "action": "start" if state else "stop"
+            }
+        }
 
         await self._command(farm_id, worker_id, command)
 
