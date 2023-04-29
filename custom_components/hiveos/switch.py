@@ -76,7 +76,8 @@ class HiveOsWorker(SwitchEntity):
             "farm_id": worker["farm_id"],
             "version": worker["versions"]["hive"],
             "farm_name": farm["name"],
-            "online": worker["stats"]["online"]
+            "online": worker["stats"]["online"],
+            "needs_upgrade": worer["needs_upgrade"]
         }
 
         return HiveOsWorker(hiveos, params)
@@ -198,7 +199,12 @@ class HiveOsWorker(SwitchEntity):
         )
 
         if not self.available:
-            _LOGGER.warning("Could not shutdown worker \"%s\" since it's not available.", self.name)
+            _LOGGER.warning("Could not upgrade worker \"%s\" since it's not available.", self.name)
+        else if not self._params["needs_upgrade"]:
+            _LOGGER.info(
+                "HiveOS reports that this worker is already at the latest version \"%s\".",
+                self._params["version"]
+            )
         else:
             await self._hiveos.worker_upgrade(
                 self._params["farm_id"],
