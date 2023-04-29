@@ -17,7 +17,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     data = hass.data[const.DOMAIN][config_entry.entry_id]
 
     async_add_entities([
-        hiveos.HiveOsWorker(
+        HiveOsWorker(
             coord,
             coord.hiveos_api,
             coord.data
