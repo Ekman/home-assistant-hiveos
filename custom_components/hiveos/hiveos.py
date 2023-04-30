@@ -16,7 +16,6 @@ class HiveOsWorkerParams(TypedDict):
     version: str
     farm_name: str
     online: bool
-    needs_upgrade: bool
 
 class HiveOsCommand(TypedDict):
     """A HiveOs command"""
