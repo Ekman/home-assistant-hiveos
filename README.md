@@ -1,5 +1,7 @@
 # Home Assistant HiveOS
 
+**HiveOS is now only accessible using API by paid farms. I haven't had time to develop this integration and, due to the API change, I'll officially stop development. I might pick this up in the future.**
+
 [![CircleCI](https://circleci.com/gh/Ekman/home-assistant-hiveos/tree/master.svg?style=svg)](https://circleci.com/gh/Ekman/home-assistant-hiveos/tree/master)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 
